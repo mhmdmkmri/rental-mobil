@@ -1,20 +1,21 @@
 ## Car Rental
 
-![](screenshoot/login.png)
-
 Aplikasi Rental Mobil berbasis web dibangun dengan laravel 5.8 dan Mysql
 
-## Fiitur
+## Cara Menggunakan 
 
-1. Management Pengguna
-2. Management Mobil
-3. Management Customer
-4. Management Transaksi
-5. Management List Transaksi Aktif
-5. Management History Transaksi
-6. Management Setting Aplikasi
-7. Management Print Kuitansi Transaksi
-8. Management Export Data Transaksi Via Excel
-9. Integrasi dengan website (optional)
+1. clone repositori
+2. composer install/update
+3. php artisan key:gen
+4. php artisan storage:link
+
+## Login
+1. username : admin
+   password : rahasia
+
+2. username : super-admin
+   password : rahasia
+
+3 user bisa regis di form register
 
 
