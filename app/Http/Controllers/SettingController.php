@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Role;
 use App\Setting;
+use App\User;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 
 class SettingController extends Controller
@@ -15,12 +18,18 @@ class SettingController extends Controller
     public function __construct()
     {
         $this->setting = new Setting();
+        $this->user = new User();
+        $this->role = new Role();
     }
 
     public function index()
     {
+        $user = $this->user->where('id', Auth::id())->first();
+
+        $role = $this->role->where('id', $user->role_id)->first();
+
         $data = $this->setting->get();
-        return view('backend.setting.index',compact(['data']));
+        return view('backend.setting.index',compact(['data', 'role', 'user']));
     }
 
     public function change(Request $request){
@@ -61,6 +70,10 @@ class SettingController extends Controller
 
     public function create()
     {
+        $user = $this->user->where('id', Auth::id())->first();
+
+        $role = $this->role->where('id', $user->role_id)->first();
+
         return view('backend.setting.create');
     }
 
@@ -78,11 +91,14 @@ class SettingController extends Controller
     {
         $data = $this->setting->find($id);
         return $data;
-
     }
 
     public function edit($id)
     {
+        $user = $this->user->where('id', Auth::id())->first();
+
+        $role = $this->role->where('id', $user->role_id)->first();
+
         $data = $this->setting->find($id);
         return view('backend.setting.edit',compact('data'));
 

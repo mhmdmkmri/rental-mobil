@@ -33,12 +33,17 @@ class IndexController extends Controller
     }
 
     public function index(){
+        $user = $this->user->where('id', Auth::id())->first();
+
+        $role = $this->role->where('id', $user->role_id)->first();
+
         SEOMeta::setDescription($this->setting->where('slug','description')->get()->first()->description);
         OpenGraph::setDescription($this->setting->where('slug','description')->get()->first()->description);
         OpenGraph::setTitle('Digsa.id | Home');
         OpenGraph::addProperty('type', 'pages');
         OpenGraph::addImage(asset('frontend/img/brand/digsa-color.png'));
-        return view('frontend.layouts');
+
+        return view('frontend.layouts', compact(['user', 'role']));
     }
 
     public function menu($slug_menu,$slug_detail=null){

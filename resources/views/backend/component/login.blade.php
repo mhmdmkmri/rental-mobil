@@ -9,7 +9,6 @@
     <meta name="description" content="">
     <meta name="author" content="">
     <title>Admin Page</title>
-    <link href="{{asset('backend/img/favicon.png')}}" rel="icon" type="image/png">
     <!-- Custom fonts for this template-->
     <link href="{{asset('backend/vendor/fontawesome-free/css/all.min.css')}}" rel="stylesheet" type="text/css">
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
@@ -19,7 +18,7 @@
 
 </head>
 
-<body class="bg-gradient-danger">
+<body class="bg-gradient-success">
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-lg-4">
@@ -29,17 +28,9 @@
                         @include('backend.component.error')
 
                         <div class="text-center">
-                            <img src="{{asset('backend/img/logo.png')}}" width="100px">
                             <h1 class="h4 text-gray-900 mb-4">
-                                SIRM V.1.0<br>
-                                <small class="text-muted h6">
-                                    Sistem Informasi Rental Mobil
-                                    <br><center><p>Repost by <a href='https://stokcoding.com/' title='StokCoding.com' target='_blank'>StokCoding.com</a></p></center>
-                                    
-                                </small>
-
-                            </h1>
-
+                                Rental Mobil
+                            </h1
                         </div>
 
                         <form class="user" action="{{route('proceed-login')}}" method="POST">
@@ -58,6 +49,9 @@
                                 </button>
                             </div>
                         </form>
+                        <div>
+                            <a href="{{route('register')}}"> Register ?</a>
+                        </div>
                     </div>
                 </div>
             </div>

@@ -9,7 +9,10 @@ use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
 use App\CarImage;
+use App\Role;
+use App\User;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Auth;
 
 class CarController extends Controller
 {
@@ -18,12 +21,18 @@ class CarController extends Controller
     {
         $this->car = new Car();
         $this->image = new CarImage();
+        $this->role = new Role();
+        $this->user = new User();
     }
 
     public function index()
     {
 
-        return view('backend.car.index');
+        $user = $this->user->where('id', Auth::id())->first();
+
+        $role = $this->role->where('id', $user->role_id)->first();
+
+        return view('backend.car.index', compact(['role', 'user']));
     }
 
     public function source(){
@@ -72,7 +81,11 @@ class CarController extends Controller
 
     public function create()
     {
-        return view('backend.car.create');
+        $user = $this->user->where('id', Auth::id())->first();
+
+        $role = $this->role->where('id', $user->role_id)->first();
+
+        return view('backend.car.create', compact(['user', 'role']));
     }
 
     public function store(Request $request)
@@ -112,7 +125,12 @@ class CarController extends Controller
     public function edit($id)
     {
         $data = $this->car->find($id);
-        return view('backend.car.edit',compact('data'));
+
+        $user = $this->user->where('id', Auth::id())->first();
+
+        $role = $this->role->where('id', $user->role_id)->first();
+
+        return view('backend.car.edit',compact('data', 'role', 'user'));
 
     }
 

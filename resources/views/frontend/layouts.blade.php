@@ -20,7 +20,6 @@
     <!-- Title -->
     <title>{{setting('title')}} | Home</title>
     <!-- Favicon -->
-    <link rel="icon" href="{{asset('frontend/img/brand/favicon.png')}}">
     <!-- Core Stylesheet -->
     <link href="{{asset('frontend/style.css')}}" rel="stylesheet">
     <!-- Responsive CSS -->

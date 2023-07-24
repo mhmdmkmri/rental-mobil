@@ -3,11 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Manufacture;
+use App\Role;
+use App\User;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
-
+use Illuminate\Support\Facades\Auth;
 
 class ManufactureController extends Controller
 {
@@ -15,11 +17,17 @@ class ManufactureController extends Controller
     public function __construct()
     {
         $this->manufacture = new Manufacture();
+        $this->user = new User();
+        $this->role = new Role();
     }
 
     public function index()
     {
-        return view('backend.manufacture.index');
+        $user = $this->user->where('id', Auth::id())->first();
+
+        $role = $this->role->where('id', $user->role_id)->first();
+
+        return view('backend.manufacture.index', compact(['role', 'user']));
     }
 
     public function source(){
@@ -43,7 +51,11 @@ class ManufactureController extends Controller
 
     public function create()
     {
-        return view('backend.manufacture.create');
+        $user = $this->user->where('id', Auth::id())->first();
+
+        $role = $this->role->where('id', $user->role_id)->first();
+
+        return view('backend.manufacture.create', compact('role', 'user'));
     }
 
     public function store(Request $request)
@@ -70,9 +82,11 @@ class ManufactureController extends Controller
 
     public function edit($id)
     {
-        $data = $this->manufacture->find($id);
-        return view('backend.manufacture.edit',compact('data'));
+        $user = $this->user->where('id', Auth::id())->first();
 
+        $role = $this->role->where('id', $user->role_id)->first();
+        $data = $this->manufacture->find($id);
+        return view('backend.manufacture.edit',compact('data', 'role', 'user'));
     }
 
     public function update(Request $request, $id)

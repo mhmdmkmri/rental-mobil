@@ -11,7 +11,10 @@ use App\Car;
 use App\Customer;
 use Barryvdh\DomPDF\Facade as PDF;
 use App\Exports\TransactionExport;
+use App\Role;
+use App\User;
 use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\Auth;
 
 class TransactionController extends Controller
 {
@@ -21,28 +24,52 @@ class TransactionController extends Controller
         $this->car = new Car();
         $this->customer = new Customer();
         $this->transaction = new Transaction();
+        $this->user = new User();
+        $this->role = new Role();
     }
 
     public function index()
     {
-        return view('backend.transaction.index');
+        $user = $this->user->where('id', Auth::id())->first();
+
+        $role = $this->role->where('id', $user->role_id)->first();
+
+        return view('backend.transaction.index', compact(['user', 'role']));
     }
 
-    public function history(){
-        return view('backend.transaction.history');
+    public function history()
+    {
+        $user = $this->user->where('id', Auth::id())->first();
+
+        $role = $this->role->where('id', $user->role_id)->first();
+
+        return view(
+            'backend.transaction.history',
+            compact(['user', 'role'])
+        );
     }
 
-    public function source($status){
-        $query= Transaction::query();
-        $query->where('status',$status);
-        $query->orderBy('created_at','desc');
+    public function source($status)
+    {
+        $user = $this->user->where('id', Auth::id())->first();
+
+        $role = $this->role->where('id', $user->role_id)->first();
+
+        $customer = $this->customer->where('user_id', Auth::id())->firstOrFail();
+
+        $query = Transaction::query();
+        $query->where('status', $status);
+        if ($role->name != 'Admin' || $role->name != 'Super Admin') {
+            $query->where('customer_id', $customer->id);
+        }
+        $query->orderBy('created_at', 'desc');
         return DataTables::eloquent($query)
-        ->filter(function ($query) {
-            if (request()->has('search')) {
-                $query->whereHas('customer',function ($q) {
-                    $q->where('name', 'LIKE', '%' . request('search')['value'] . '%');
-                });
-            }
+            ->filter(function ($query) {
+                if (request()->has('search')) {
+                    $query->whereHas('customer', function ($q) {
+                        $q->where('name', 'LIKE', '%' . request('search')['value'] . '%');
+                    });
+                }
             })
             ->addColumn('invoice_no', function ($data) {
                 return $data->invoice_no;
@@ -60,123 +87,133 @@ class TransactionController extends Controller
                 return title_case($data->car->name);
             })
             ->addColumn('status', function ($data) {
-                return $data->status == 'proses' ? '<span class="badge badge-success">'.$data->status.'</span>':'<span class="badge badge-secondary">'.$data->status.'</span>';
+                return $data->status == 'proses' ? '<span class="badge badge-success">' . $data->status . '</span>' : '<span class="badge badge-secondary">' . $data->status . '</span>';
             })
             ->addIndexColumn()
             ->addColumn('action', 'backend.transaction.index-action')
-            ->rawColumns(['action','status'])
+            ->rawColumns(['action', 'status'])
             ->toJson();
     }
 
     public function create()
     {
-        return view('backend.transaction.create');
+        $user = $this->user->where('id', Auth::id())->first();
+
+        $role = $this->role->where('id', $user->role_id)->first();
+
+        // Find the customer's data associated with the currently authenticated user
+        $data = $this->customer->where('user_id', Auth::id())->firstOrFail();
+
+        return view('backend.transaction.create', compact(['user', 'role', 'data']));
     }
 
     public function store(Request $request)
     {
         DB::beginTransaction();
         try {
-            $request->merge(['slug'=>$request->name]);
-            if($request->has('customer_id')){
+            $request->merge(['slug' => $request->name]);
+            if ($request->has('customer_id')) {
                 $customer_id = $request->customer_id;
-            }else{
+            } else {
                 $customer = $this->customer->create($request->all());
                 $customer_id = $customer->id;
             }
 
             $car = $this->car->find($request->car_id);
             $data_transaction = [
-                'invoice_no'=> $this->generateInvoice(date('Y-m-d')),
-                'car_id'=> $car->id,
-                'customer_id'=> $customer_id,
-                'rent_date'=> $request->rent_date,
-                'back_date'=> $request->back_date,
-                'price'=> $car->price,
-                'amount'=> Carbon::parse($request->rent_date)->diffInDays($request->back_date) * $car->price,
-                'status'=> 'proses',
+                'invoice_no' => $this->generateInvoice(date('Y-m-d')),
+                'car_id' => $car->id,
+                'customer_id' => $customer_id,
+                'rent_date' => $request->rent_date,
+                'back_date' => $request->back_date,
+                'price' => $car->price,
+                'amount' => Carbon::parse($request->rent_date)->diffInDays($request->back_date) * $car->price,
+                'status' => 'proses',
             ];
 
             $transaction = $this->transaction->create($data_transaction);
-            $car->update(['status'=>'terpakai']);
+            $car->update(['status' => 'terpakai']);
             DB::commit();
-            return redirect()->route('transaction.index')->with('success-message','Data telah disimpan');
+            return redirect()->route('transaction.index')->with('success-message', 'Data telah disimpan');
             // return redirect()->route('transaction.print',$transaction->id);
         } catch (\Exception $e) {
             DB::rollback();
-            return redirect()->back()->with('error-message',$e->getMessage());
+            return redirect()->back()->with('error-message', $e->getMessage());
         }
-
     }
 
     public function show($id)
     {
         $data = $this->transaction->find($id);
         return $data;
-
     }
 
     public function edit($id)
     {
-        $data = $this->transaction->find($id);
-        return view('backend.transaction.edit',compact('data'));
+        $user = $this->user->where('id', Auth::id())->first();
 
+        $role = $this->role->where('id', $user->role_id)->first();
+
+        $data = $this->transaction->find($id);
+        return view('backend.transaction.edit', compact('data', 'user', 'role'));
     }
 
     public function update(Request $request, $id)
     {
         DB::beginTransaction();
         try {
-            $request->merge(['slug'=>str_slug($request->name)]);
+            $request->merge(['slug' => str_slug($request->name)]);
             $this->transaction->find($id)->update($request->all());
             DB::commit();
-            return redirect()->route('transaction.index')->with('success-message','Data telah d irubah');
+            return redirect()->route('transaction.index')->with('success-message', 'Data telah d irubah');
         } catch (\Exception $e) {
             DB::rollback();
-            return redirect()->back()->with('error-message',$e->getMessage());
+            return redirect()->back()->with('error-message', $e->getMessage());
         }
-
     }
 
     public function destroy($id)
     {
         $this->transaction->destroy($id);
-        return redirect()->route('transaction.index')->with('success-message','Data telah dihapus');
+        return redirect()->route('transaction.index')->with('success-message', 'Data telah dihapus');
     }
 
-    public function print($id){
+    public function print($id)
+    {
         $data = $this->transaction->find($id);
         // return view('backend.transaction.cetak',compact(['data']));
-        $pdf = PDF::loadView('backend.transaction.cetak',compact(['data']));
-        return $pdf->stream($data->invoice_no.'.pdf');
+        $pdf = PDF::loadView('backend.transaction.cetak', compact(['data']));
+        return $pdf->stream($data->invoice_no . '.pdf');
     }
 
-    public function complete(Request $request,$id){
+    public function complete(Request $request, $id)
+    {
         $transaction = $this->transaction->find($id);
         $transaction->update([
-            'return_date'=>$request->return_date,
-            'status'=>'selesai',
-            'penalty'=>Carbon::parse($transaction->back_date)->diffInDays($request->return_date) * $transaction->car->penalty,
-            'amount'=>Carbon::parse($transaction->back_date)->diffInDays($request->return_date) * $transaction->car->penalty + $transaction->amount
+            'return_date' => $request->return_date,
+            'status' => 'selesai',
+            'penalty' => Carbon::parse($transaction->back_date)->diffInDays($request->return_date) * $transaction->car->penalty,
+            'amount' => Carbon::parse($transaction->back_date)->diffInDays($request->return_date) * $transaction->car->penalty + $transaction->amount
 
         ]);
-        $this->car->find($transaction->car_id)->update(['status'=>'tersedia']);
-        return redirect()->route('transaction.index')->with('success-message','Data telah disimpan');
+        $this->car->find($transaction->car_id)->update(['status' => 'tersedia']);
+        return redirect()->route('transaction.index')->with('success-message', 'Data telah disimpan');
     }
 
-    private function generateInvoice($date){
-        $tanggal = substr($date,8,2);
-        $bulan = substr($date,5,2);
-        $tahun = substr($date,2,2);
-        $transaction = $this->transaction->whereDate('created_at',$date)->get();
-        $no = 'TRX-'.$tanggal.$bulan.$tahun.'-'.sprintf('%05s',$transaction->count()+1);
+    private function generateInvoice($date)
+    {
+        $tanggal = substr($date, 8, 2);
+        $bulan = substr($date, 5, 2);
+        $tahun = substr($date, 2, 2);
+        $transaction = $this->transaction->whereDate('created_at', $date)->get();
+        $no = 'TRX-' . $tanggal . $bulan . $tahun . '-' . sprintf('%05s', $transaction->count() + 1);
         return $no;
     }
 
-    public function export(Request $request){
+    public function export(Request $request)
+    {
         $transaction = new TransactionExport();
-        $transaction->setDate($request->from,$request->to);
-        return Excel::download($transaction, 'laporan_trx_'.$request->from.'_'.$request->to.'.xlsx');
+        $transaction->setDate($request->from, $request->to);
+        return Excel::download($transaction, 'laporan_trx_' . $request->from . '_' . $request->to . '.xlsx');
     }
-
 }

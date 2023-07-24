@@ -19,7 +19,10 @@ class ProductController extends Controller
 
     public function index()
     {
-        return view('backend.product.index');
+        $user = $this->user->where('id', Auth::id())->first();
+
+        $role = $this->role->where('id', $user->role_id)->first();
+        return view('backend.product.index', compact(['role', 'user']));
 
     }
 

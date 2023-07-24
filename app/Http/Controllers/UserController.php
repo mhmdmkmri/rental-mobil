@@ -23,7 +23,11 @@ class UserController extends Controller
 
     public function index()
     {
-        return view('backend.user.index');
+        $user = $this->user->where('id', Auth::id())->first();
+
+        $role = $this->role->where('id', $user->role_id)->first();
+
+        return view('backend.user.index', compact(['user', 'role']));
     }
 
     public function source(){
@@ -51,8 +55,13 @@ class UserController extends Controller
 
     public function create()
     {
-        $role = $this->role;
-        return view('backend.user.create',compact(['role']));
+        $rolecreate = $this->role;
+
+        $user = $this->user->where('id', Auth::id())->first();
+
+        $role = $this->role->where('id', $user->role_id)->first();
+
+        return view('backend.user.create',compact(['rolecreate', 'role', 'user']));
     }
 
     public function store(Request $request)
@@ -67,8 +76,6 @@ class UserController extends Controller
             DB::rollback();
             return redirect()->back()->with('error-message',$e->getMessage());
         }
-
-
     }
 
     public function show($id)
@@ -80,9 +87,14 @@ class UserController extends Controller
 
     public function edit($id)
     {
-        $role = $this->role;
+        $roleedit = $this->role;
         $data = $this->user->find($id);
-        return view('backend.user.edit',compact(['data','role']));
+
+        $user = $this->user->where('id', Auth::id())->first();
+
+        $role = $this->role->where('id', $user->role_id)->first();
+
+        return view('backend.user.edit',compact(['data','roleedit', 'role', 'user']));
 
     }
 
@@ -102,13 +114,19 @@ class UserController extends Controller
 
     public function destroy($id)
     {
+        $data = $this->user->get();
         $this->user->destroy($id);
         return redirect()->back()->with('success-message','Data telah dihapus');
 
     }
 
     public function change(){
-        return view('backend.user.change');
+        $data = $this->user->get();
+
+        $user = $this->user->where('id', Auth::id())->first();
+
+        $role = $this->role->where('id', $user->role_id)->first();
+        return view('backend.user.change', compact(['user', 'role']));
     }
 
     public function updatePassword(Request $request){

@@ -3,10 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Customer;
+use App\Role;
+use App\User;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 
 class CustomerController extends Controller
@@ -15,11 +18,17 @@ class CustomerController extends Controller
     public function __construct()
     {
         $this->customer = new Customer();
+        $this->user = new User();
+        $this->role = new Role();
     }
 
     public function index()
     {
-        return view('backend.customer.index');
+        $user = $this->user->where('id', Auth::id())->first();
+
+        $role = $this->role->where('id', $user->role_id)->first();
+
+        return view('backend.customer.index', compact(['user', 'role']));
     }
 
     public function source(){
@@ -60,14 +69,18 @@ class CustomerController extends Controller
 
     public function create()
     {
-        return view('backend.customer.create');
+        $user = $this->user->where('id', Auth::id())->first();
+
+        $role = $this->role->where('id', $user->role_id)->first();
+
+        return view('backend.customer.create', compact(['user', 'role']));
     }
 
     public function store(Request $request)
     {
         DB::beginTransaction();
         try {
-            $requset = $request->merge(['slug'=>$request->name]);
+            $request = $request->merge(['slug'=>$request->name]);
             $this->customer->create($request->all());
             DB::commit();
             return redirect()->route('customer.index')->with('success-message','Data telah disimpan');
@@ -88,7 +101,12 @@ class CustomerController extends Controller
     public function edit($id)
     {
         $data = $this->customer->find($id);
-        return view('backend.customer.edit',compact('data'));
+
+        $user = $this->user->where('id', Auth::id())->first();
+
+        $role = $this->role->where('id', $user->role_id)->first();
+
+        return view('backend.customer.edit',compact('data', 'user', 'role'));
 
     }
 

@@ -21,7 +21,7 @@
                         <div class="form-group">
                           <label>Role</label>
                           <select name="role_id" class="form-control select2" required="">
-                                @foreach ($role->get() as $row)
+                                @foreach ($roleedit->get() as $row)
                                 <option value="{{$row->id}}" {{$row->id == $data->role_id ? 'selected':''}}>{{title_case($row->name)}}</option>
                                 @endforeach
                           </select>

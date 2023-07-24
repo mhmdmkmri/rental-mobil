@@ -18,6 +18,8 @@
     </div>
     </a>
 </div>
+
+@if ($role->name == 'Admin' || $role->name == 'Super Admin')
 <div class="col-xl-3 col-md-6 mb-4">
     <a href="{{route('customer.index')}}" style="text-decoration:none;">
     <div class="card border-left-danger shadow-sm h-100 py-2">
@@ -35,6 +37,8 @@
     </div>
     </a>
 </div>
+@endif
+
 <div class="col-xl-3 col-md-6 mb-4">
     <a href="{{route('transaction.history')}}" style="text-decoration:none;">
     <div class="card border-left-danger shadow-sm h-100 py-2">
@@ -69,7 +73,9 @@
     </div>
     </a>
 </div>
-<div class="col-lg-6">
+
+@if ($role->name == 'Admin' || $role->name == 'Super Admin')
+<div class="col-lg-12">
     <div class="card shadow-sm mb-4">
         <div class="card-header py-3">
             <h6 class="m-0 font-weight-bold text-danger">Transaksi Tahun {{date('Y')}}</h6>
@@ -79,6 +85,8 @@
         </div>
     </div>
 </div>
+@endif
+
 @endsection
 @push('scripts')
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.bundle.min.js" type="text/javascript"></script>
