@@ -8,6 +8,8 @@ Aplikasi Rental Mobil berbasis web dibangun dengan laravel 5.8 dan Mysql
 2. composer install/update
 3. php artisan key:gen
 4. php artisan storage:link
+5. setting .env database connectionnya
+6. import rentalmobil.sql ke mysql
 
 ## Login
 1. username : admin
